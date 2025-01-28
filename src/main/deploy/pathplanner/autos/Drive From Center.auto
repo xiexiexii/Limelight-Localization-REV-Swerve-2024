@@ -1,0 +1,31 @@
+{
+  "version": 1.0,
+  "startingPose": {
+    "position": {
+      "x": 7.799084186553955,
+      "y": 4.169000148773193
+    },
+    "rotation": 1.7182781401162653e-25
+  },
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "DriveFromCenter"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "finishDriving"
+          }
+        }
+      ]
+    }
+  },
+  "folder": null,
+  "choreoAuto": true
+}
