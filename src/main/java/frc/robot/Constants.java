@@ -6,6 +6,8 @@ package frc.robot;
 
 import com.revrobotics.CANSparkBase.IdleMode;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
@@ -15,7 +17,7 @@ public final class Constants {
   public static final class DriveConstants {
   // Driving Parameters - Note that these are not the maximum capable speeds of
   // the robot, rather the allowed maximum speeds
-  public static final double kMaxSpeedMetersPerSecond = 4.5;
+  public static final double kMaxSpeedMetersPerSecond = 3.5;
   public static final double kMaxAngularSpeed = 1.5 * Math.PI; // radians per second
 
   public static final double kDirectionSlewRate = 1.2; // radians per second
@@ -23,9 +25,9 @@ public final class Constants {
   public static final double kRotationalSlewRate = 4.5; // percent per second (1 = 100%)
 
   // Chassis configuration
-  public static final double kTrackWidth = Units.inchesToMeters(23.5);
+  public static final double kTrackWidth = Units.inchesToMeters(26);
   // Distance between centers of right and left wheels on robot
-  public static final double kWheelBase = Units.inchesToMeters(23.5);
+  public static final double kWheelBase = Units.inchesToMeters(26);
   // Distance between front and back wheels on robot
   public static final SwerveDriveKinematics kDriveKinematics = new SwerveDriveKinematics(
     new Translation2d(kWheelBase / 2, kTrackWidth / 2),
@@ -72,7 +74,7 @@ public final class Constants {
      public static final double kDriveWheelFreeSpeedRps = (kDrivingMotorFreeSpeedRps * kWheelCircumferenceMeters)
           / kDrivingMotorReduction;
 
-      public static final double kDrivingEncoderPositionFactor = 0.10471975803375244; // meters
+    public static final double kDrivingEncoderPositionFactor = 0.10471975803375244; // meters
     public static final double kDrivingEncoderVelocityFactor = ((kWheelDiameterMeters * Math.PI)
         / kDrivingMotorReduction) / 60.0; // meters per second
 
@@ -109,7 +111,7 @@ public final class Constants {
 
     public final static int k_start = Button.kStart.value; // Start Button
     public static final int k_A = Button.kA.value; // A
-    public static final int k_B = Button.kB.value; // B
+    public static final int k_Y = Button.kY.value; // Y
   }
 
   public static final class AutoConstants {
@@ -131,5 +133,8 @@ public final class Constants {
 
     // Tag Reject Rotation Rate
     public static final int rejectionRotationRate = 720;
+  }
+  public static final class LocationConstants {
+    public static final Pose2d kReefID6 = new Pose2d(new Translation2d(13.97, 1.97), new Rotation2d(-132));  
   }
 }

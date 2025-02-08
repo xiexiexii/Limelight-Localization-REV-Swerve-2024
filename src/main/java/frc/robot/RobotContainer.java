@@ -2,9 +2,12 @@
 package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.ControllerConstants;
+import frc.robot.Constants.LocationConstants;
 import frc.robot.subsystems.Swerve.DriveSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -60,7 +63,7 @@ public class RobotContainer {
     // NamedCommands.registerCommand("Limelight Auto", limelightDrive);
 
     // Autos
-    // m_chooser.addOption("Curvy yay", m_robotDrive.getAuto("Curvy yay"));
+    m_chooser.addOption("Horizontal", m_robotDrive.getAuto("Horizontal Auto"));
   }
 
   // Define your Button Bindings here
@@ -76,6 +79,12 @@ public class RobotContainer {
     new JoystickButton(m_driverController.getHID(), ControllerConstants.k_A)
     .whileTrue(
       new RunCommand(() -> m_robotDrive.setX(), m_robotDrive)
+    );
+    
+    // Goes to ID 6 -- Y Button
+    new JoystickButton(m_driverController.getHID(), ControllerConstants.k_Y)
+    .onTrue(
+      new InstantCommand(() -> m_robotDrive.goToDesiredPose(LocationConstants.kReefID6),m_robotDrive)
     );
   }
 

@@ -4,8 +4,16 @@
 
 package frc.robot.subsystems.Swerve;
 
+import java.util.List;
+
 import com.kauailabs.navx.frc.AHRS;
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.GoalEndState;
+import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.path.PathPlannerTrajectory;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.ReplanningConfig;
@@ -15,6 +23,7 @@ import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -25,6 +34,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.Limelight.LimelightHelpers;
@@ -66,7 +76,6 @@ public class DriveSubsystem extends SubsystemBase {
   private final AHRS m_gyro = new AHRS();
 
   private final Field2d m_field = new Field2d();
-
   // Red Alliance sees forward as 180 degrees, Blue Alliance sees as 0
   public static int AllianceYaw;
 
@@ -79,9 +88,9 @@ public class DriveSubsystem extends SubsystemBase {
   private SlewRateLimiter m_rotRateLimiter = new SlewRateLimiter(DriveConstants.kRotationalSlewRate);
   private double m_prevTime = WPIUtilJNI.now() * 1e-6;
 
-   private Rotation2d rawGyroRotation = new Rotation2d();
+  private Rotation2d rawGyroRotation = new Rotation2d();
   public static final PIDConstants translationalPID = new PIDConstants(0.824, 0.95, 0.15);
-  public static final PIDConstants rotationalPID = new PIDConstants(0.23, 0, 0);
+  public static final PIDConstants rotationalPID = new PIDConstants(0.23, 0, 0.01);
 
   public static final HolonomicPathFollowerConfig config = new HolonomicPathFollowerConfig(translationalPID, rotationalPID,
     5.7, DriveConstants.kWheelBase/Math.sqrt(2), new ReplanningConfig());
@@ -97,18 +106,16 @@ public class DriveSubsystem extends SubsystemBase {
       m_backRight.getPosition()
     },
     new Pose2d());
-
+  
   // Creates a new DriveSubsystem
   public DriveSubsystem() {
-
-    // Do this in either robot or subsystem init
-    SmartDashboard.putData("Field", m_field);
 
     AutoBuilder.configureHolonomic(
       this::getPose,
       this::setPose, 
       () -> DriveConstants.kDriveKinematics.toChassisSpeeds(getModuleStates()), 
-      this::runVelocity, config, 
+      this::runVelocity,
+      config, 
       () -> {
         var alliance = DriverStation.getAlliance();
         if (alliance.isPresent()) {
@@ -123,9 +130,8 @@ public class DriveSubsystem extends SubsystemBase {
   // This method will be called once per scheduler run
   // Periodically update the odometry
   public void periodic() {
-
-    updateVisionOdometry();
-    /*
+    updateVisionMeasurements();
+    
     m_poseEstimator.update(
       Rotation2d.fromDegrees(-m_gyro.getYaw()), 
       new SwerveModulePosition[] {
@@ -134,7 +140,7 @@ public class DriveSubsystem extends SubsystemBase {
         m_backLeft.getPosition(),
         m_backRight.getPosition()
       });
-
+    /* 
       boolean doRejectUpdate = false;
 
       LimelightHelpers.SetRobotOrientation("", -m_gyro.getYaw(), 0, 0, 0, 0, 0);
@@ -160,9 +166,8 @@ public class DriveSubsystem extends SubsystemBase {
       }
       */
 
-      // Do this in either robot periodic or subsystem periodic
-      m_field.setRobotPose(m_poseEstimator.getEstimatedPosition());
-  
+      // puts field onto smart dashboard
+      SmartDashboard.putData("Field", m_field);
 
       // Puts Yaw + Angle on Smart Dashboard, as well as Limelight MT2 Field Localization
       SmartDashboard.putNumber("NavX Yaw", -m_gyro.getYaw());
@@ -236,11 +241,36 @@ public class DriveSubsystem extends SubsystemBase {
           estimateWrapper.getStdvs(estimateWrapper.poseEstimate.avgTagDist));
 
         // Update position on Field2d
-        estimateWrapper.field.setRobotPose(estimateWrapper.poseEstimate.pose);
+        // m_field.setRobotPose(estimateWrapper.poseEstimate.pose);
+        // SmartDashboard.putNumber("local x",estimateWrapper.poseEstimate.pose.getX());
+        // SmartDashboard.putNumber("local y",estimateWrapper.poseEstimate.pose.getY());
       }
     }
+    
+    m_field.setRobotPose(m_poseEstimator.getEstimatedPosition());
+    SmartDashboard.putNumber("local x", m_poseEstimator.getEstimatedPosition().getX());
+    SmartDashboard.putNumber("local y", m_poseEstimator.getEstimatedPosition().getY());
   }
+  // uses localization to drive to specific pose
+  public void goToDesiredPose(Pose2d desiredPose){
+    // Create a list of waypoints from poses. Each pose represents one waypoint.
+    // The rotation component of the pose should be the direction of travel. Do not use holonomic rotation.
+    List<Translation2d> waypoints = PathPlannerPath.bezierFromPoses(
+        getPose(),
+        desiredPose
+    );
 
+    PathConstraints constraints = new PathConstraints(0.5, 0.5, 2 * Math.PI, 4 * Math.PI); // The constraints for this path.
+    // PathConstraints constraints = PathConstraints.unlimitedConstraints(12.0); // You can also use unlimited constraints, only limited by motor torque and nominal battery voltage
+
+    // Create the path using the waypoints created above
+    PathPlannerPath path = new PathPlannerPath(
+          waypoints,
+          constraints,
+          new GoalEndState(0,desiredPose.getRotation()) // The ideal starting state, this is only relevant for pre-planned paths, so can be null for on-the-fly paths.
+    );
+    AutoBuilder.followPath(path).schedule();
+  }
   // Check if pose estimate is valid
   private boolean poseEstimateIsValid(LimelightHelpers.PoseEstimate estimate) {
     return Math.abs(getTurnRate()) < VisionConstants.rejectionRotationRate
