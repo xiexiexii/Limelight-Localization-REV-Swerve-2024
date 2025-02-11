@@ -11,6 +11,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.Unit;
 import edu.wpi.first.wpilibj.XboxController.Button;
 
 public final class Constants {
@@ -135,6 +136,6 @@ public final class Constants {
     public static final int rejectionRotationRate = 720;
   }
   public static final class LocationConstants {
-    public static final Pose2d kReefID6 = new Pose2d(new Translation2d(13.97, 1.97), new Rotation2d(-132));  
+    public static final Pose2d kReefID6 = new Pose2d(new Translation2d(13.97, 1.97), new Rotation2d(Units.degreesToRadians(112)));  
   }
 }

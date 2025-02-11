@@ -260,7 +260,7 @@ public class DriveSubsystem extends SubsystemBase {
         desiredPose
     );
 
-    PathConstraints constraints = new PathConstraints(0.5, 0.5, 2 * Math.PI, 4 * Math.PI); // The constraints for this path.
+    PathConstraints constraints = new PathConstraints(3.0, 3.0, 2 * Math.PI, 4 * Math.PI); // The constraints for this path.
     // PathConstraints constraints = PathConstraints.unlimitedConstraints(12.0); // You can also use unlimited constraints, only limited by motor torque and nominal battery voltage
 
     // Create the path using the waypoints created above
@@ -273,7 +273,7 @@ public class DriveSubsystem extends SubsystemBase {
   }
   // Check if pose estimate is valid
   private boolean poseEstimateIsValid(LimelightHelpers.PoseEstimate estimate) {
-    return Math.abs(getTurnRate()) < VisionConstants.rejectionRotationRate
+    return estimate != null && Math.abs(getTurnRate()) < VisionConstants.rejectionRotationRate
       && estimate.avgTagDist < VisionConstants.rejectionDistance;
   }
 
